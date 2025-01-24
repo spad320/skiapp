@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Resort Matcher</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .card {
+            background-color: #fff;
+            width: 600px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .card img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        .buttons .like {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .buttons .dislike {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .weather-link {
+            display: block;
+            margin-top: 10px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .weather-link:hover {
+            text-decoration: underline;
+        }
+        .preferences {
+            width: 600px;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+        .preferences h2 {
+            margin-top: 0;
+        }
+        .preferences ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .preferences li {
+            margin: 10px 0;
+        }
+        .rating {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .rating .fa-star {
+            font-size: 2em;
+            cursor: pointer;
+            color: #ccc;
+        }
+        .rating .fa-star:hover,
+        .rating .fa-star:hover ~ .fa-star {
+            color: #ffcc00;
+        }
+        .rating .fa-star.selected {
+            color: #ffcc00;
+        }
+        .weather-radar {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
+        .recommendation {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="card" id="resort-card">
+        <img src="images/whistler.jpg" alt="Ski Resort" id="resort-image">
+        <h2 id="resort-name">Ski Resort Name</h2>
+        <p id="resort-description">Ski Resort Description</p>
+        <p id="weather-report">Weather Report: Loading...</p>
+        <p id="expense-estimate">Estimated Expense: Loading...</p>
+        <a href="#" id="weather-source-link" class="weather-link" target="_blank">View Weather Source</a>
+        <a href="#" id="trail-map-link" target="_blank">View Trail Map</a>
+        <div class="rating" id="rating">
+            <i class="fa fa-star" data-value="1"></i>
+            <i class="fa fa-star" data-value="2"></i>
+            <i class="fa fa-star" data-value="3"></i>
+            <i class="fa fa-star" data-value="4"></i>
+            <i class="fa fa-star" data-value="5"></i>
+        </div>
+        <div class="weather-radar" id="weather-radar"></div>
+    </div>
+
+    <div class="preferences">
+        <h2>Rated Resorts</h2>
+        <ul id="rated-resorts-list"></ul>
+        <div class="recommendation" id="recommendation">Recommendation: Loading...</div>
+    </div>
+
+    <script>
+        const resorts = [
+            {
+                name: "Whistler Blackcomb",
+                image: "https://images.prismic.io/ski-com/ZuB5jBoQrfVKl7rF_EM_Whistler_map_2018-19_2048x1343.jpg?auto=format,compress",
+                description: "Whistler Blackcomb is one of the largest and most popular ski resorts in North America.",
+                lat: 50.115, // Latitude for Whistler Blackcomb
+                lon: -122.948, // Longitude for Whistler Blackcomb
+                trailMapUrl: "https://www.onthesnow.com/british-columbia/whistler-blackcomb/trailmap.html",
+                liftTicketPrice: 150, // Estimated lift ticket price in USD
+                lodgingPrice: 200 // Estimated lodging price per night in USD
+            },
+            {
+                name: "Aspen Snowmass",
+                image: "https://s3.onthesnow.com/images/trailmaps/aspen/aspen-mountain/20231208163651/xlarge.jpg",
+                description: "Aspen Snowmass offers a variety of terrain and a vibrant après-ski scene.",
+                lat: 39.208, // Latitude for Aspen Snowmass
+                lon: -106.949, // Longitude for Aspen Snowmass
+                trailMapUrl: "https://www.onthesnow.com/colorado/aspen-snowmass/trailmap.html",
+                liftTicketPrice: 180, // Estimated lift ticket price in USD
+                lodgingPrice: 250 // Estimated lodging price per night in USD
+            },
+            {
+                name: "Niseko United",
+                image: "https://www.niseko.ne.jp/en/wp-content/uploads/2020/08/7ab0c061239f71e8488cdb217e61dcba.gif",
+                description: "Niseko United is renowned for its deep powder and excellent tree skiing.",
+                lat: 42.804, // Latitude for Niseko United
+                lon: 140.687, // Longitude for Niseko United
+                trailMapUrl: "https://www.onthesnow.com/hokkaido/niseko-united/trailmap.html",
+                liftTicketPrice: 100, // Estimated lift ticket price in USD
+                lodgingPrice: 150 // Estimated lodging price per night in USD
+            },
+            {
+                name: "Chamonix",
+                image: "https://cdn.chamonixallyear.com/cay-media/uploads/2011/08/Ski-Areas-854x367.jpg",
+                description: "Chamonix is a legendary ski resort in the French Alps, known for its challenging terrain and stunning scenery.",
+                lat: 45.923, // Latitude for Chamonix
+                lon: 6.869, // Longitude for Chamonix
+                trailMapUrl: "https://www.onthesnow.com/northern-alps/chamonix-mont-blanc/trailmap.html",
+                liftTicketPrice: 120, // Estimated lift ticket price in USD
+                lodgingPrice: 180 // Estimated lodging price per night in USD
+            },
+            {
+                name: "St. Anton",
+                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqyVU2nBmJ5rSPJopmfiwJR_i_O2OO4dwIBQ&s",
+                description: "St. Anton is a world-famous ski resort in Austria, offering a mix of great skiing and lively après-ski.",
+                lat: 47.128, // Latitude for St. Anton
+                lon: 10.264, // Longitude for St. Anton
+                trailMapUrl: "https://www.onthesnow.com/tyrol/st-anton-am-arlberg/trailmap.html",
+                liftTicketPrice: 130, // Estimated lift ticket price in USD
+                lodgingPrice: 220 // Estimated lodging price per night in USD
+            },
+            {
+                name: "Verbier",
+                image: "https://images.prismic.io/ski-com/ZuBw9RoQrfVKl7j1_7b8d72b0049ba80f_b6a6a2c6edaacaf4%402x.jpg?auto=format,compress",
+                description: "Verbier is a premier ski resort in Switzerland, known for its extensive off-piste terrain and vibrant nightlife.",
+                lat: 46.096, // Latitude for Verbier
+                lon: 7.226, // Longitude for Verbier
+                trailMapUrl: "https://www.onthesnow.com/valais/verbier/trailmap.html",
+                liftTicketPrice: 140, // Estimated lift ticket price in USD
+                lodgingPrice: 230 // Estimated lodging price per night in USD
+            },
+            {
+                name: "Jackson Hole",
+                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTg36pBeNBet_vJwhu3epLyIRZ6rUbumDA1Bg&s",
+                description: "Jackson Hole is a top ski destination in the USA, famous for its steep terrain and deep powder.",
+                lat: 43.587, // Latitude for Jackson Hole
+                lon: -110.827, // Longitude for Jackson Hole
+                trailMapUrl: "https://www.onthesnow.com/wyoming/jackson-hole/trailmap.html",
+                liftTicketPrice: 170, // Estimated lift ticket price in USD
+                lodgingPrice: 240 // Estimated lodging price per night in USD
+            },
+            {
+                name: "Cortina d'Ampezzo",
+                image: "https://vcdn.bergfex.at/images/resized/66/cecbbfa024585866_d91a20fa312d9f45.jpg",
+                description: "Cortina d'Ampezzo is a glamorous ski resort in Italy, offering beautiful scenery and a rich cultural experience.",
+                lat: 46.538, // Latitude for Cortina d'Ampezzo
+                lon: 12.135, // Longitude for Cortina d'Ampezzo
+                trailMapUrl: "https://www.onthesnow.com/veneto/cortina-dampezzo/trailmap.html",
+                liftTicketPrice: 110, // Estimated lift ticket price in USD
+                lodgingPrice: 190 // Estimated lodging price per night in USD
+            }
+        ];
+
+        let currentResortIndex = 0;
+
+        function updateResortCard() {
+            const resort = resorts[currentResortIndex];
+            document.getElementById('resort-name').innerText = resort.name;
+            document.getElementById('resort-image').src = resort.image;
+            document.getElementById('resort-description').innerText = resort.description;
+            document.getElementById('weather-report').innerText = "Weather Report: Loading...";
+            document.getElementById('trail-map-link').href = resort.trailMapUrl;
+
+            // Fetch weather report from Open-Meteo API
+            const weatherApiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${resort.lat}&longitude=${resort.lon}&current_weather=true&hourly=temperature_2m,snowfall,visibility,wind_speed_10m&daily=precipitation_sum&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&models=gfs_seamless`;
+            fetch(weatherApiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const weatherReport = data.current_weather ? `${data.current_weather.temperature}°F, Wind: ${data.current_weather.windspeed} mph, Snowfall: ${data.hourly.snowfall[0]} inches` : "No weather data available";
+                    document.getElementById('weather-report').innerText = `Weather Report: ${weatherReport}`;
+                    document.getElementById('weather-source-link').href = weatherApiUrl;
+                })
+                .catch(error => {
+                    document.getElementById('weather-report').innerText = "Weather Report: Unable to load";
+                    document.getElementById('weather-source-link').href = "#";
+                });
+
+            // Fetch expense estimate from a mock API
+            const expenseApiUrl = `https://api.example.com/expenses?resort=${encodeURIComponent(resort.name)}`;
+            fetch(expenseApiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const expenseEstimate = `Lift Ticket: $${data.liftTicketPrice}, Lodging: $${data.lodgingPrice}/night`;
+                    document.getElementById('expense-estimate').innerText = `Estimated Expense: ${expenseEstimate}`;
+                })
+                .catch(error => {
+                    document.getElementById('expense-estimate').innerText = "Estimated Expense: Unable to load";
+                });
+
+            // Update rating display
+            updateRatingDisplay();
+
+            // Update weather radar
+            updateWeatherRadar(resort.lat, resort.lon);
+
+            // Update recommendation
+            updateRecommendation();
+        }
+
+        function rateResort(rating) {
+            const resort = resorts[currentResortIndex];
+            let ratings = JSON.parse(localStorage.getItem('ratings')) || {};
+            if (!ratings[resort.name]) {
+                ratings[resort.name] = [];
+            }
+            ratings[resort.name].push(rating);
+            localStorage.setItem('ratings', JSON.stringify(ratings));
+            currentResortIndex = (currentResortIndex + 1) % resorts.length;
+            updateResortCard();
+            updatePreferences();
+        }
+
+        function updateRatingDisplay() {
+            const resort = resorts[currentResortIndex];
+            const ratings = JSON.parse(localStorage.getItem('ratings')) || {};
+            const resortRatings = ratings[resort.name] || [];
+            const averageRating = resortRatings.length ? (resortRatings.reduce((a, b) => a + b, 0) / resortRatings.length).toFixed(1) : "No ratings yet";
+            const ratingElement = document.getElementById('rating');
+            ratingElement.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('i');
+                star.className = 'fa fa-star';
+                if (i <= averageRating) {
+                    star.classList.add('selected');
+                }
+                star.dataset.value = i;
+                star.onclick = () => rateResort(i);
+                ratingElement.appendChild(star);
+            }
+        }
+
+        function updatePreferences() {
+            const ratings = JSON.parse(localStorage.getItem('ratings')) || {};
+            const ratedResortsList = document.getElementById('rated-resorts-list');
+            ratedResortsList.innerHTML = '';
+            for (const resortName in ratings) {
+                const li = document.createElement('li');
+                const resortRatings = ratings[resortName];
+                const averageRating = (resortRatings.reduce((a, b) => a + b, 0) / resortRatings.length).toFixed(1);
+                li.innerText = `${resortName}: ${averageRating} stars`;
+                ratedResortsList.appendChild(li);
+            }
+        }
+
+        function updateWeatherRadar(lat, lon) {
+            const radarElement = document.getElementById('weather-radar');
+            radarElement.innerHTML = `<iframe width="100%" height="400" src="https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1" frameborder="0"></iframe>`;
+        }
+
+        function updateRecommendation() {
+            const ratings = JSON.parse(localStorage.getItem('ratings')) || {};
+            let highestRatedResort = null;
+            let highestAverageRating = 0;
+
+            for (const resort of resorts) {
+                if (!ratings[resort.name]) continue;
+                const resortRatings = ratings[resort.name];
+                const averageRating = resortRatings.reduce((a, b) => a + b, 0) / resortRatings.length;
+                if (averageRating > highestAverageRating) {
+                    highestAverageRating = averageRating;
+                    highestRatedResort = resort;
+                }
+            }
+
+            const recommendationElement = document.getElementById('recommendation');
+            if (highestRatedResort) {
+                recommendationElement.innerText = `Recommendation: ${highestRatedResort.name} with an average rating of ${highestAverageRating.toFixed(1)} stars`;
+            } else {
+                recommendationElement.innerText = "Recommendation: No recommendations available";
+            }
+        }
+
+        // Initialize the first resort card and preferences
+        updateResortCard();
+        updatePreferences();
+    </script>
+</body>
+</html>
